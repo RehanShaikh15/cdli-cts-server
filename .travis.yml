@@ -1,10 +1,11 @@
-dist: xenial   # required for Python >= 3.7
 language: python
 python:
-  - 3.7
+  - '3.13'
 
 install:
-  - pipenv install --dev
+  - python -m pip install pipenv
+  - pipenv verify
+  - pipenv sync --dev
 script:
   - pipenv run pytest
-  - pipenv run pycodestyle .
+  - pipenv run pycodestyle main.py test_app.py

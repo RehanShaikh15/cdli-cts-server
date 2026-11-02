@@ -5,7 +5,16 @@ verify_ssl = true
 
 [packages]
 flask-nemo = "*"
-capitains-nautilus = "*"
+# The published 1.0.3 release imports the removed werkzeug.contrib.cache.
+capitains-nautilus = {git = "https://github.com/Capitains/Nautilus.git", ref = "cf17ffa550d207b74f4386647f4ed4be7b702ded"}
+# Nemo and Nautilus still import Markup from Flask (removed in Flask 2.3).
+flask = ">=2.2.5,<2.3"
+# Flask 2.2 uses URL helpers removed in Werkzeug 3.
+werkzeug = ">=2.3.8,<3"
+# Both extensions use pkg_resources, removed in setuptools 81.
+setuptools = "<81"
+# Used by the Linux container; development uses Flask's server on Windows.
+gunicorn = "*"
 
 [dev-packages]
 pycodestyle = "*"

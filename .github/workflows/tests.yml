@@ -1,0 +1,48 @@
+name: Tests
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install locked dependencies
+        run: |
+          python -m pip install pipenv
+          pipenv verify
+          pipenv sync --dev
+      - name: Run integration tests
+        run: pipenv run pytest
+      - name: Check Python style
+        run: pipenv run pycodestyle main.py test_app.py
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build image with locked dependencies
+        run: docker build --tag cdli-cts-server:test .
+      - name: Check container startup and endpoints
+        run: |
+          docker run --detach --name cts-test --publish 127.0.0.1:5048:80 cdli-cts-server:test
+          trap 'docker logs cts-test; docker rm --force cts-test' EXIT
+          curl --fail --retry 20 --retry-all-errors --retry-delay 2 http://127.0.0.1:5048/
+          curl --fail --location http://127.0.0.1:5048/nemo/
+          curl --fail 'http://127.0.0.1:5048/api/cts?request=GetCapabilities'

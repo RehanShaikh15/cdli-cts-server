@@ -13,6 +13,7 @@ def client():
 def test_index(client):
     '''Verify landing page.'''
     rv = client.get('/')
+    assert rv.status_code == 200
     assert 'CDLI Text Services' in rv.data.decode()
 
 
@@ -20,14 +21,15 @@ def test_nemo(client):
     '''Verify nemo pages.'''
     nemo = main.nemo.prefix
     rv = client.get(nemo, follow_redirects=True)
+    assert rv.status_code == 200
     text = rv.data.decode()
     assert 'Nemo' in text
     assert 'Text Collections' in text
 
     urn = 'urn:cts:cdli:P497322'
-    page = 'default-collection-test-samples-converted-by-atf2cts'
-    text = client.get(f'{nemo}/collections/{urn}/{page}').data.decode()
-    assert 'CDLI Literary' in text
+    rv = client.get(f'{nemo}/collections/{urn}', follow_redirects=True)
+    assert rv.status_code == 200
+    assert 'CDLI Literary' in rv.data.decode()
 
 
 def cts_query(request, urn=None):
@@ -42,6 +44,7 @@ def cts_query(request, urn=None):
 def test_nautilus(client):
     '''Verify nautilus api service.'''
     rv = client.get(cts_query('GetCapabilities'))
+    assert rv.status_code == 200
     dom = xml.dom.minidom.parseString(rv.data)
     assert dom.documentElement.tagName == 'GetCapabilities'
     textgroups = dom.getElementsByTagName('textgroup')
@@ -50,8 +53,10 @@ def test_nautilus(client):
     assert 'urn:cts:cdli:P464358' in urns
 
     works = dom.getElementsByTagName('work')
-    urn = works[0].getAttribute('urn')
+    urn = 'urn:cts:cdli:P254855.P254855'
+    assert urn in [work.getAttribute('urn') for work in works]
     rv = client.get(cts_query('GetPassage', urn))
+    assert rv.status_code == 200
     passage = xml.dom.minidom.parseString(rv.data)
     assert passage.documentElement.tagName == 'GetPassage'
     texts = passage.getElementsByTagName('text')
@@ -63,3 +68,5 @@ def test_nautilus(client):
     edition = divs[0]
     assert edition.getAttribute('type') == 'edition'
     assert edition.getAttribute('n').startswith(urn)
+    assert 'Heaven is a raven' in rv.data.decode()
+    assert 'uga{mu\u0161en} am3' in rv.data.decode()

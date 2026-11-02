@@ -8,7 +8,7 @@ import os
 
 import flask
 from flask_nemo import Nemo
-from capitains_nautilus.cts.resolver import NautilusCTSResolver
+from capitains_nautilus.cts.resolver import NautilusCtsResolver
 from capitains_nautilus.flask_ext import FlaskNautilus
 
 app = flask.Flask("CTS webserver demo (nemo)")
@@ -19,7 +19,7 @@ if os.path.exists(LOCAL_CONFIG):
 
 corpora = [entry.path for entry in os.scandir('corpora') if entry.is_dir()]
 print('app: resolver given', corpora)
-resolver = NautilusCTSResolver(corpora)
+resolver = NautilusCtsResolver(corpora)
 resolver.parse()
 
 nautilus = FlaskNautilus(
